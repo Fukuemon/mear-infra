@@ -18,7 +18,7 @@ module "db_subnet_group" {
   name            = coalesce(var.db_subnet_group_name, var.identifier)
   use_name_prefix = var.db_subnet_group_use_name_prefix
   description     = var.db_subnet_group_description
-  subnet_ids      = var.subnet_ids
+  subnet_ids      = var.db_subnet_ids
 
   tags = merge(var.tags, var.db_subnet_group_tags)
 }

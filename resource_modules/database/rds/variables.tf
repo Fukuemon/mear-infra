@@ -383,7 +383,7 @@ variable "db_subnet_group_description" {
   default     = null
 }
 
-variable "subnet_ids" {
+variable "db_subnet_ids" {
   description = "A list of VPC subnet IDs"
   type        = list(string)
   default     = []
