@@ -131,7 +131,6 @@ variable "security_group_ids" {
 variable "subnet_ids" {
   description = "List of subnets to associate with the task or service"
   type        = list(string)
-  default     = []
 }
 
 variable "ordered_placement_strategy" {
@@ -357,7 +356,7 @@ variable "runtime_platform" {
   type        = any
   default = {
     operating_system_family = "LINUX"
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = "ARM64"
   }
 }
 
@@ -658,4 +657,11 @@ variable "security_group_tags" {
   description = "A map of additional tags to add to the security group created"
   type        = map(string)
   default     = {}
+}
+
+
+variable "task_exec_iam_role_policy_arn" {
+  description = "IAM policy ARN to attach to the ECS task execution IAM role"
+  type        = string
+  default     = ""
 }

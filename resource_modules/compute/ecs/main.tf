@@ -115,7 +115,7 @@ module "service" {
   requires_compatibilities      = try(each.value.requires_compatibilities, ["FARGATE"])
   runtime_platform = try(each.value.runtime_platform, {
     operating_system_family = "LINUX"
-    cpu_architecture        = "X86_64"
+    cpu_architecture        = "ARM64"
   })
   skip_destroy = try(each.value.skip_destroy, null)
   volume       = try(each.value.volume, {})
@@ -131,6 +131,7 @@ module "service" {
   task_exec_iam_role_permissions_boundary = try(each.value.task_exec_iam_role_permissions_boundary, null)
   task_exec_iam_role_tags                 = try(each.value.task_exec_iam_role_tags, {})
   task_exec_iam_role_policies             = try(each.value.task_exec_iam_role_policies, {})
+  task_exec_iam_role_policy_arn = try(each.value.task_exec_iam_role_policy_arn, null)
   task_exec_iam_role_max_session_duration = try(each.value.task_exec_iam_role_max_session_duration, null)
 
   # Task execution IAM role policy
