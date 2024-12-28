@@ -222,7 +222,7 @@ module "alb" {
 module "acm" {
   source = "../../resource_modules/security/acm"
 
-  domain_name = var.domain_name
+  domain_name = local.route53_record_name_a
   zone_id     = data.aws_route53_zone.this.id
   validation_method = "DNS"
 
