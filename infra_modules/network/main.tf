@@ -20,6 +20,13 @@ module "vpc" {
   single_nat_gateway = var.single_nat_gateway
 
   create_igw = true
+  # VPC Flow Logs (Cloudwatch log group and IAM role will be created)
+  vpc_flow_log_iam_role_name            = "vpc-complete-example-role"
+  vpc_flow_log_iam_role_use_name_prefix = false
+  enable_flow_log                       = true
+  create_flow_log_cloudwatch_log_group  = true
+  create_flow_log_cloudwatch_iam_role   = true
+  flow_log_max_aggregation_interval     = 60
 }
 
 module "vpc_endpoints" {
