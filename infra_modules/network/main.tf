@@ -102,20 +102,33 @@ module "private_security_group" {
   description = local.private_security_group_description
   vpc_id      = module.vpc.vpc_id
 
-  // セキュリティグループ内部からの特定プロトコル/ポートを許可
-  ingress_with_self = [
+  computed_ingress_with_source_security_group_id = [
     {
-      rule        = "http-80-tcp"
-      description = "Allow HTTP traffic within the same security group"
+        rule                     = "http-80-tcp"
+        source_security_group_id = module.public_security_group.security_group_id
+        description              = "Port 80 from public SG rule"
     },
     {
-      rule        = "https-443-tcp"
-      description = "Allow HTTPS traffic within the same security group"
+        rule                     = "https-443-tcp"
+        source_security_group_id = module.public_security_group.security_group_id
+        description              = "Port 443 from public SG rule"
+      },
+      {
+        rule = "custom-8000-tcp"
+        source_security_group_id = module.private_security_group.security_group_id
+        description = "Port 8000 from private SG rule"
+      }
+    ]
+    number_of_computed_ingress_with_source_security_group_id = 3
+
+    ingress_with_self = [
+      {
+        rule = "all-all"
+        description = "Self"
     }
   ]
 
-  // 外部通信は必要なサービスやCIDRに限定
-  egress_rules = ["https-443-tcp"]
+  egress_rules = ["all-all"]
 
   tags = local.private_security_group_tags
 }
@@ -128,17 +141,20 @@ module "database_security_group" {
   description = local.db_security_group_description
   vpc_id      = module.vpc.vpc_id
 
+  computed_ingress_with_source_security_group_id = local.db_security_group_computed_ingress_with_source_security_group_id
+  number_of_computed_ingress_with_source_security_group_id = 1
+
   # Open for self (rule or from_port+to_port+protocol+description)
   ingress_with_self = [
     {
-      rule        = "all-all"
+      rule = "all-all"
       description = "Self"
-    },
+    }
   ]
-
-  egress_rules = ["all-all"]
+  egress_rules = ["all-all"] # アウトバウンドはすべて許可
   tags         = local.db_security_group_tags
 }
+
 
 module "alb" {
   source = "../../resource_modules/network/alb"
@@ -148,28 +164,8 @@ module "alb" {
   subnets = module.vpc.public_subnets
   tags    = var.tags
 
-  security_group_ingress_rules = {
-    all_http = {
-      description = "Allow all HTTP traffic"
-      from_port   = 80
-      to_port     = 80
-      ip_protocol    = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-    all_https = {
-      description = "Allow all HTTPS traffic"
-      from_port   = 443
-      to_port     = 443
-      ip_protocol    = "tcp"
-      cidr_ipv4   = "0.0.0.0/0"
-    }
-  }
-  security_group_egress_rules = {
-    all = {
-      ip_protocol = "-1"
-      cidr_ipv4   = module.vpc.vpc_cidr_block
-    }
-  }
+  create_security_group = false
+  security_groups = [module.public_security_group.security_group_id]
 
   listeners = {
     ex-http-https-redirect = {

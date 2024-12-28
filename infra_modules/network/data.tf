@@ -57,6 +57,14 @@ locals {
     }),
   )
 
+  db_security_group_computed_ingress_with_source_security_group_id = [
+      {
+        rule                     = "postgresql-tcp"
+        source_security_group_id = module.private_security_group.security_group_id
+        description              = "PostgreSQL from private SG rule"
+      },
+    ]
+
   ## ALB ##
   target_group_key = "alb-${var.region_tag[var.region]}-${var.env}-${var.app_name}"
 
