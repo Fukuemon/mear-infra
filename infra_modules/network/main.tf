@@ -51,18 +51,6 @@ module "vpc_endpoints" {
       route_table_ids     = module.vpc.private_route_table_ids  # ルートテーブルIDを指定
       tags                = { Name = "s3-vpc-endpoint" }
     },
-    ecs = {
-      service             = "ecs"
-      private_dns_enabled = true
-      subnet_ids          = module.vpc.private_subnets
-      tags                = { Name = "ecs-vpc-endpoint" }
-    },
-    ecs_telemetry = {
-      service             = "ecs-telemetry"
-      private_dns_enabled = true
-      subnet_ids          = module.vpc.private_subnets
-      tags                = { Name = "ecs-telemetry-vpc-endpoint" }
-    },
     ecr_api = {
       service             = "ecr.api"
       private_dns_enabled = true
@@ -74,12 +62,6 @@ module "vpc_endpoints" {
       private_dns_enabled = true
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "ecr-dkr-vpc-endpoint" }
-    },
-    ssmmessages = {
-      service             = "ssmmessages"
-      private_dns_enabled = true
-      subnet_ids          = module.vpc.private_subnets
-      tags                = { Name = "ssmmessages-vpc-endpoint" }
     },
     logs = {
       service             = "logs"
@@ -93,12 +75,6 @@ module "vpc_endpoints" {
       subnet_ids          = module.vpc.private_subnets
       tags                = { Name = "ssm-vpc-endpoint" }
     },
-    kms = {
-      service             = "kms"
-      private_dns_enabled = true
-      subnet_ids          = module.vpc.private_subnets
-      tags                = { Name = "kms-vpc-endpoint" }
-    }
   }
 
   tags = local.vpc_endpoint_tags
