@@ -103,12 +103,12 @@ module "private_security_group" {
   vpc_id      = module.vpc.vpc_id
 
   computed_ingress_with_source_security_group_id = [
-    {
+      {
         rule                     = "http-80-tcp"
         source_security_group_id = module.public_security_group.security_group_id
         description              = "Port 80 from public SG rule"
-    },
-    {
+      },
+      {
         rule                     = "https-443-tcp"
         source_security_group_id = module.public_security_group.security_group_id
         description              = "Port 443 from public SG rule"
@@ -125,8 +125,8 @@ module "private_security_group" {
       {
         rule = "all-all"
         description = "Self"
-    }
-  ]
+      }
+    ]
 
   egress_rules = ["all-all"]
 
@@ -191,15 +191,15 @@ module "alb" {
   target_groups = {
     (local.target_group_key) = {
       protocol = "HTTP"
-      port = 8000
+      port = 80
       target_type = "ip"
       vpc_id = module.vpc.vpc_id
       health_check = {
-        path = "/"
+        path = "/health/"
         port = "traffic-port"
         protocol = "HTTP"
-        timeout = 5
-        interval = 30
+        timeout = 30
+        interval = 40
       }
       create_attachment = false
     }

@@ -33,8 +33,10 @@ module "backend" {
   fargate_capacity_providers = var.fargate_capacity_providers
 
   ecs_service = var.ecs_service
-  ecs_task = var.ecs_task
+  app_task = var.app_task
   app_container_image = var.app_container_image
+  nginx_task = var.nginx_task
+  nginx_container_image = var.nginx_container_image
   enable_cloudwatch_logging = var.enable_cloudwatch_logging
 
   private_sg_ids = [module.network.private_security_group_id]
@@ -61,6 +63,12 @@ module "backend" {
   db_security_group_id = module.network.database_security_group_id
   db_subnet_ids = module.network.database_subnets
   db_subnet_group_name = module.network.database_subnet_group_name
+
+  ## Application Admin
+  app_admin_email = var.app_admin_email
+  app_admin_password = var.app_admin_password
+  app_db_engine = var.app_db_engine
+  cors_allowed_origins = var.cors_allowed_origins
 
   ## S3
   acl = var.acl

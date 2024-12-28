@@ -32,14 +32,15 @@ module "ecs" {
       // タスク定義
       container_definitions = {
         (local.container_name) = {
-          cpu    = var.ecs_task.cpu
-          memory = var.ecs_task.memory
+          cpu    = var.app_task.cpu
+          memory = var.app_task.memory
           image  = var.app_container_image
+          readonly_root_filesystem = false
           port_mappings = [
             {
               name          = local.container_name
-              containerPort = var.ecs_task.port
-              hostPort      = var.ecs_task.port
+              containerPort = var.app_task.port
+              hostPort      = var.app_task.port
               protocol      = "tcp"
             }
           ]
@@ -49,10 +50,34 @@ module "ecs" {
           environment = [
             {
               name = "PORT"
-              value = var.ecs_task.port
+              value = var.app_task.port
+            },
+            {
+              name = "DEBUG"
+              value = "false"
+            },
+            {
+              name = "AWS_S3_REGION_NAME"
+              value = data.aws_region.current.name
             }
           ]
           secrets = [
+            {
+              name = "CORS_ALLOWED_ORIGINS"
+              valueFrom = aws_ssm_parameter.cors_allowed_origins.name
+            },
+            {
+              name = "DJANGO_SUPERUSER_EMAIL"
+              valueFrom = aws_ssm_parameter.app_admin_email.name
+            },
+            {
+              name = "DJANGO_SUPERUSER_PASSWORD"
+              valueFrom = aws_ssm_parameter.app_admin_password.name
+            },
+            {
+              name = "DB_ENGINE"
+              valueFrom = aws_ssm_parameter.db_engine.name
+            },
             {
               name = "DB_HOST"
               valueFrom = aws_ssm_parameter.db_host.name
@@ -66,7 +91,7 @@ module "ecs" {
               valueFrom = aws_ssm_parameter.db_name.name
             },
             {
-              name = "DB_USERNAME"
+              name = "DB_USER"
               valueFrom = aws_ssm_parameter.db_username.name
             },
             {
@@ -74,27 +99,51 @@ module "ecs" {
               valueFrom = aws_ssm_parameter.db_password.name
             },
             {
-              name = "S3_BUCKET_NAME"
+              name = "AWS_STORAGE_BUCKET_NAME"
               valueFrom = aws_ssm_parameter.s3_bucket_name.name
             },
             {
-              name = "ACCESS_KEY_ID"
+              name = "AWS_ACCESS_KEY_ID"
               valueFrom = aws_ssm_parameter.access_key_id.name
             },
             {
-              name = "SECRET_ACCESS_KEY"
+              name = "AWS_SECRET_ACCESS_KEY"
               valueFrom = aws_ssm_parameter.secret_access_key.name
+            },
+          ]
+        }
+        nginx = {
+          cpu    = var.nginx_task.cpu
+          memory = var.nginx_task.memory
+          image  = var.nginx_container_image
+          readonly_root_filesystem = false
+          port_mappings = [
+            {
+              name          = "nginx"
+              containerPort = var.nginx_task.port
+              hostPort      = var.nginx_task.port
+              protocol      = "tcp"
             }
           ]
+          environment = [
+            {
+              name = "APP_PORT"
+              value = var.app_task.port
+            },
+            {
+              name = "APP_HOST"
+              value = "127.0.0.1"
+            }
+          ]
+          enable_cloudwatch_logging = var.enable_cloudwatch_logging
         }
       }
 
-      // load balancerにalbを指定
       load_balancer = {
         service = {
           target_group_arn = var.alb_target_group_arn
-          container_name    = local.container_name            # コンテナ名を指定
-          container_port    = var.ecs_task.port               # コンテナポートを指定
+          container_name    = "nginx"
+          container_port    = var.nginx_task.port
         }
       }
 
@@ -105,6 +154,8 @@ module "ecs" {
       subnet_ids = var.subnet_ids
 
       // タスク実行ロール
+      create_task_exec_iam_role = var.create_task_exec_iam_role
+      create_task_exec_policy = var.create_task_exec_policy
       task_exec_iam_role_name        = "${var.app_name}-task-exec"
       task_exec_ssm_param_arns = [
         aws_ssm_parameter.db_host.arn,
@@ -114,12 +165,14 @@ module "ecs" {
         aws_ssm_parameter.db_password.arn,
         aws_ssm_parameter.s3_bucket_name.arn,
         aws_ssm_parameter.access_key_id.arn,
-        aws_ssm_parameter.secret_access_key.arn
+        aws_ssm_parameter.secret_access_key.arn,
+        aws_ssm_parameter.app_admin_email.arn,
+        aws_ssm_parameter.app_admin_password.arn,
+        aws_ssm_parameter.db_engine.arn,
+        aws_ssm_parameter.cors_allowed_origins.arn
       ]
-      # task_exec_iam_role_policies = {
-      #   execution_policy = aws_iam_policy.ecs_task_execution_policy.arn
-      # }
 
+      task_exec_iam_role_policy_arn = aws_iam_policy.ecs_task_execution_policy.arn
       // タスクロール
       tasks_iam_role_name        = "${var.app_name}-tasks"
       tasks_iam_role_description = "tasks IAM role for ${var.app_name}"
@@ -139,7 +192,6 @@ module "ecs" {
   }
 
   create_task_exec_iam_role = var.create_task_exec_iam_role
-  create_task_exec_policy = var.create_task_exec_policy
   task_exec_ssm_param_arns = [
     aws_ssm_parameter.db_host.arn,
     aws_ssm_parameter.db_port.arn,
@@ -148,7 +200,11 @@ module "ecs" {
     aws_ssm_parameter.db_password.arn,
     aws_ssm_parameter.s3_bucket_name.arn,
     aws_ssm_parameter.access_key_id.arn,
-    aws_ssm_parameter.secret_access_key.arn
+    aws_ssm_parameter.secret_access_key.arn,
+    aws_ssm_parameter.app_admin_email.arn,
+    aws_ssm_parameter.app_admin_password.arn,
+    aws_ssm_parameter.db_engine.arn,
+    aws_ssm_parameter.cors_allowed_origins.arn
   ]
   task_exec_iam_role_policies = {
     execution_policy     = aws_iam_policy.ecs_task_execution_policy.arn
@@ -169,6 +225,7 @@ module "db" {
   instance_class = var.db_instance_class
   allocated_storage = var.db_allocated_storage
 
+  manage_master_user_password = false
   db_name = local.db_name
   username = var.db_username
   password = var.db_password
@@ -192,50 +249,45 @@ module "db" {
 ###########################################
 # KMS
 ###########################################
-data "aws_caller_identity" "current" {}
 
 resource "aws_kms_key" "this" {
   description             = "KMS key for SSM Parameter Store encryption"
   deletion_window_in_days = 10
+
   policy = jsonencode({
-    Version = "2012-10-17"
-    Id      = "key-default-1"
+    Version = "2012-10-17",
+    Id      = "key-default-1",
     Statement = [
+      # IAM User Permissions (Root User)
       {
-        Sid    = "Enable IAM User Permissions"
-        Effect = "Allow"
+        Sid    = "EnableIAMUserPermissions",
+        Effect = "Allow",
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
         },
-        Action   = "kms:*"
-        Resource = "*"
+        Action   = "kms:*",
+        Resource = ["*"]
       },
+      # Developer Access
       {
-        Sid    = "Allow administration of the key"
-        Effect = "Allow"
+        Sid    = "DeveloperAccess",
+        Effect = "Allow",
         Principal = {
           AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/${var.app_name}_developer"
         },
         Action = [
-          "kms:ReplicateKey",
-          "kms:Create*",
-          "kms:Describe*",
-          "kms:Enable*",
-          "kms:List*",
-          "kms:Put*",
-          "kms:Update*",
-          "kms:Revoke*",
-          "kms:Disable*",
-          "kms:Get*",
-          "kms:Delete*",
-          "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion"
+          "kms:DescribeKey",
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKeyWithoutPlaintext"
         ],
-        Resource = "*"
+        Resource = ["*"]
       },
+      # ECS Task Role Access
       {
-        Sid    = "Allow use of the key"
-        Effect = "Allow"
+        Sid    = "EcsTaskAccess",
+        Effect = "Allow",
         Principal = {
           AWS = module.ecs.task_exec_iam_role_arn
         },
@@ -243,14 +295,14 @@ resource "aws_kms_key" "this" {
           "kms:DescribeKey",
           "kms:Encrypt",
           "kms:Decrypt",
-          "kms:ReEncrypt*",
           "kms:GenerateDataKey",
           "kms:GenerateDataKeyWithoutPlaintext"
         ],
-        Resource = "*"
+        Resource = ["*"]
       }
     ]
   })
+
   tags = local.kms_key_tags
 }
 
@@ -262,16 +314,13 @@ resource "aws_iam_policy" "ecs_task_execution_policy" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
-      # KMSアクセス
+      # KMS & SSMアクセス
       {
         Effect   = "Allow",
         Action   = [
           "kms:Decrypt",
-          "kms:DescribeKey"
         ],
-        Resource = [
-          aws_kms_key.this.arn
-        ]
+        Resource = "*"
       },
       # ECRアクセス
       {
@@ -297,25 +346,33 @@ resource "aws_iam_policy" "ecs_task_execution_policy" {
       {
         Effect   = "Allow",
         Action   = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath"
+        "ssm:GetParameters",
         ],
-        Resource = [
-          "arn:aws:ssm:*:*:parameter/*"
-        ]
+        Resource = "*"
       }
     ]
   })
 }
 
-
-
-
 ############################################
 # SSM Parameter - DB
 ############################################
 
+resource "aws_ssm_parameter" "cors_allowed_origins" {
+  name  = local.cors_allowed_origins_name
+  type  = "SecureString"
+  value =  var.cors_allowed_origins
+  key_id = aws_kms_key.this.key_id
+  tags = local.ssm_parameter_tags
+}
+
+resource "aws_ssm_parameter" "db_engine" {
+  name  = local.db_engine_name
+  type  = "String"
+  value = var.app_db_engine
+  key_id = aws_kms_key.this.key_id
+  tags = local.ssm_parameter_tags
+}
 resource "aws_ssm_parameter" "db_password" {
   name  = local.db_password_name
   type  = "SecureString"
@@ -327,7 +384,7 @@ resource "aws_ssm_parameter" "db_password" {
 resource "aws_ssm_parameter" "db_host" {
   name  = local.db_host_name
   type  = "String"
-  value = module.db.db_instance_endpoint
+  value = split(":", module.db.db_instance_endpoint)[0]
   key_id = aws_kms_key.this.key_id
   tags = local.ssm_parameter_tags
 }
@@ -352,6 +409,22 @@ resource "aws_ssm_parameter" "db_username" {
   name  = local.db_username_name
   type  = "String"
   value = module.db.db_instance_username
+  key_id = aws_kms_key.this.key_id
+  tags = local.ssm_parameter_tags
+}
+
+resource "aws_ssm_parameter" "app_admin_email" {
+  name  = local.app_admin_email_name
+  type  = "String"
+  value = var.app_admin_email
+  key_id = aws_kms_key.this.key_id
+  tags = local.ssm_parameter_tags
+}
+
+resource "aws_ssm_parameter" "app_admin_password" {
+  name  = local.app_admin_password_name
+  type  = "SecureString"
+  value = var.app_admin_password
   key_id = aws_kms_key.this.key_id
   tags = local.ssm_parameter_tags
 }
@@ -386,7 +459,7 @@ module "s3" {
       {
         Sid       = "AllowPublicReadAccess",
         Effect    = "Allow",
-        Principal = "*", # 全ての人を許可
+        Principal = "*", # public
         Action    = [
           "s3:GetObject" # オブジェクトの閲覧を許可
         ],
@@ -396,6 +469,21 @@ module "s3" {
       }
     ]
   })
+
+  cors_rule = [
+    {
+      allowed_headers = ["*"]
+      allowed_methods = [
+        "HEAD",
+        "GET",
+        "PUT",
+        "POST",
+        "DELETE"
+      ]
+      allowed_origins = ["*"]
+      max_age_seconds = 3000
+    }
+  ]
 
   # タグの設定
   tags = local.s3_bucket_tags
@@ -430,10 +518,7 @@ resource "aws_iam_user_policy" "s3_access_policy" {
       {
         Effect = "Allow"
         Action = [
-          "s3:ListBucket",
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
+          "s3:*"
         ]
         Resource = [
           "arn:aws:s3:::${local.bucket_name}",

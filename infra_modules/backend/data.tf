@@ -28,7 +28,7 @@ locals {
     "Name" = "s3-bucket"
   }))
 
-  bucket_name = "${var.app_name}-${var.env}-${random_string.suffix.result}"
+  bucket_name = "${var.app_name}-${var.env}-media"
 
   // KMS Key
   kms_key_tags = merge(var.tags, tomap({
@@ -40,13 +40,16 @@ locals {
     "Name" = "ssm-parameter"
   }))
 
+  app_admin_email_name = "/${var.app_name}/${var.env}/app/admin/email"
+  app_admin_password_name = "/${var.app_name}/${var.env}/app/admin/password"
+  db_engine_name = "/${var.app_name}/${var.env}/db/engine"
   db_password_name = "/${var.app_name}/${var.env}/db/password"
   db_username_name = "/${var.app_name}/${var.env}/db/username"
   db_name_name = "/${var.app_name}/${var.env}/db/name"
   db_port_name = "/${var.app_name}/${var.env}/db/port"
   db_host_name = "/${var.app_name}/${var.env}/db/host"
   s3_bucket_name = "/${var.app_name}/${var.env}/s3/bucket"
-
+  cors_allowed_origins_name = "/${var.app_name}/${var.env}/cors/allowed_origins"
   // IAM
   iam_tags = merge(var.tags, tomap({
     "Name" = "iam"
@@ -58,3 +61,6 @@ resource "random_string" "suffix" {
   special = false
   upper   = false
 }
+
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}

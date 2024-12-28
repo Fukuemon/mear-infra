@@ -77,6 +77,8 @@ variable "rules" {
     # IPSEC
     ipsec-500-udp  = [500, 500, "udp", "IPSEC ISAKMP"]
     ipsec-4500-udp = [4500, 4500, "udp", "IPSEC NAT-T"]
+    # CustomTCP
+    custom-8000-tcp = [8000, 8000, "tcp", "Custom TCP port 8000"]
     # Kafka
     kafka-broker-tcp                   = [9092, 9092, "tcp", "Kafka PLAINTEXT enable broker 0.8.2+"]
     kafka-broker-tls-tcp               = [9094, 9094, "tcp", "Kafka TLS enabled broker 0.8.2+"]

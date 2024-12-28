@@ -70,7 +70,7 @@ variable "ecs_service" {
 # ECS Task Definition
 ################################################################################
 
-variable "ecs_task" {
+variable "app_task" {
   description = "ECS Task Definition"
   type = object({
     cpu    = number
@@ -84,7 +84,26 @@ variable "ecs_task" {
   }
 }
 
+variable "nginx_task" {
+  description = "ECS Task Definition"
+  type = object({
+    cpu    = number
+    memory = number
+    port   = number
+  })
+  default = {
+    cpu    = 256
+    memory = 512
+    port   = 80
+  }
+}
+
 variable "app_container_image" {
+  description = "Container image"
+  type        = string
+}
+
+variable "nginx_container_image" {
   description = "Container image"
   type        = string
 }
@@ -325,4 +344,30 @@ variable "acl" {
   description = "The canned ACL to apply. Defaults to 'private'"
   type        = string
   default     = "public"
+}
+
+
+################################################################################
+# APP Settings
+################################################################################
+variable "app_admin_email" {
+  description = "Admin email"
+  type        = string
+}
+
+variable "app_admin_password" {
+  description = "Admin password"
+  type        = string
+}
+
+variable "app_db_engine" {
+  description = "Database engine"
+  type        = string
+  default     = "django.db.backends.postgresql"
+}
+
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for CORS"
+  type        = string
+  default     = ""
 }
