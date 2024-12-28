@@ -794,10 +794,10 @@ resource "aws_iam_role" "task_exec" {
 }
 
 resource "aws_iam_role_policy_attachment" "task_exec_additional" {
-  for_each = { for k, v in var.task_exec_iam_role_policies : k => v if local.create_task_exec_iam_role }
+  count = local.create_task_exec_policy ? 1 : 0
 
   role       = aws_iam_role.task_exec[0].name
-  policy_arn = each.value
+  policy_arn = var.task_exec_iam_role_policy_arn
 }
 
 data "aws_iam_policy_document" "task_exec" {
