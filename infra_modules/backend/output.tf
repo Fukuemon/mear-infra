@@ -257,23 +257,3 @@ output "ssm_kms_key_arn" {
   description = "The ARN of the KMS key"
   value       = aws_kms_key.this.arn
 }
-
-
-################################################################################
-# S3
-################################################################################
-output "s3_bucket_id" {
-  description = "The ID of the S3 bucket"
-  value       = module.s3.s3_bucket_id
-}
-
-output "s3_bucket_arn" {
-  description = "The ARN of the S3 bucket"
-  value       = module.s3.s3_bucket_arn
-}
-
-output "s3_bucket_domain_name" {
-  description = "The bucket domain name"
-  value       = module.s3.s3_bucket_bucket_domain_name
-}
-

@@ -23,13 +23,6 @@ locals {
   // DB Subnet Group
   db_subnet_group_name = "dbsg-${var.app_name}-${var.env}"
 
-  // S3 Bucket
-  s3_bucket_tags = merge(var.tags, tomap({
-    "Name" = "s3-bucket"
-  }))
-
-  bucket_name = "${var.app_name}-${var.env}-media"
-
   // KMS Key
   kms_key_tags = merge(var.tags, tomap({
     "Name" = "kms-key"
@@ -38,6 +31,11 @@ locals {
   // SSM Parameter
   ssm_parameter_tags = merge(var.tags, tomap({
     "Name" = "ssm-parameter"
+  }))
+
+
+  iam_tags = merge(var.tags, tomap({
+    "Name" = "iam"
   }))
 
   app_admin_email_name = "/${var.app_name}/${var.env}/app/admin/email"
@@ -50,10 +48,6 @@ locals {
   db_host_name = "/${var.app_name}/${var.env}/db/host"
   s3_bucket_name = "/${var.app_name}/${var.env}/s3/bucket"
   cors_allowed_origins_name = "/${var.app_name}/${var.env}/cors/allowed_origins"
-  // IAM
-  iam_tags = merge(var.tags, tomap({
-    "Name" = "iam"
-  }))
 }
 
 resource "random_string" "suffix" {

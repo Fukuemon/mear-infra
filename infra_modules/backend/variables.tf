@@ -383,3 +383,11 @@ variable "cors_allowed_origins" {
   type        = string
   default     = ""
 }
+
+################################################################################
+# S3 Bucket
+################################################################################
+variable "bucket_name" {
+  description = "The name of the bucket"
+  type        = string
+}
