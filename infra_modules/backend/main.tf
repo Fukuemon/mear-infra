@@ -235,7 +235,10 @@ module "db" {
 
   iam_database_authentication_enabled = var.iam_database_authentication_enabled
 
+  multi_az = var.db_multi_az
+
   maintenance_window              = var.maintenance_window
+  backup_retention_period = var.backup_retention_period
   backup_window                   = var.backup_window
   enabled_cloudwatch_logs_exports = var.enabled_cloudwatch_logs_exports
   create_cloudwatch_log_group     = var.db_create_cloudwatch_log_group

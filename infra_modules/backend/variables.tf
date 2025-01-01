@@ -292,6 +292,12 @@ variable "db_family" {
   default     = "postgres12"
 }
 
+variable "db_multi_az" {
+  description = "Determines whether the database is multi-AZ"
+  type        = bool
+  default     = false
+}
+
 variable "iam_database_authentication_enabled" {
   description = "Determines whether IAM database authentication should be enabled"
   type        = bool
@@ -304,6 +310,12 @@ variable "maintenance_window" {
   default     = "Mon:00:00-Mon:01:00"
 }
 
+variable "backup_retention_period" {
+  description = "The number of days to retain backups for"
+  type        = number
+  default     = 7
+  
+}
 variable "backup_window" {
   description = "The window to perform backups in"
   type        = string

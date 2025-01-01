@@ -58,6 +58,7 @@ module "backend" {
   db_port = var.db_port
   db_family = var.db_family
   maintenance_window = var.maintenance_window
+  backup_retention_period = var.backup_retention_period
   backup_window = var.backup_window
 
   db_security_group_id = module.network.database_security_group_id
@@ -71,7 +72,8 @@ module "backend" {
   cors_allowed_origins = var.cors_allowed_origins
 
   ## S3
-  acl = var.acl
+  bucket_name = module.storage.bucket_name
+
 
   ### Common tag metadata
   app_name = var.app_name
@@ -79,4 +81,13 @@ module "backend" {
   tags = local.tags
 
   depends_on = [ module.network ]
+}
+
+module "storage" {
+  source = "../../../infra_modules/storage"
+
+  ### Common tag metadata
+  app_name = var.app_name
+  env = var.env
+  tags = local.tags
 }
